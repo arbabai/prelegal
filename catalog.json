@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Mutual Non-Disclosure Agreement (Standard Terms)",
+    "description": "Standard terms for a mutual non-disclosure agreement allowing both parties to share confidential information in connection with a business purpose, with obligations on use, protection, and return of confidential information.",
+    "filename": "templates/Mutual-NDA.md"
+  },
+  {
+    "name": "Mutual Non-Disclosure Agreement (Cover Page)",
+    "description": "Cover page template for the Common Paper Mutual NDA. Parties complete this with their details, the purpose of disclosure, term lengths, and governing law before signing.",
+    "filename": "templates/Mutual-NDA-coverpage.md"
+  },
+  {
+    "name": "Cloud Service Agreement",
+    "description": "Comprehensive standard terms for selling and buying cloud software and SaaS products, covering service access, user accounts, privacy, security, payment, term and termination, warranties, liability, indemnification, and confidentiality.",
+    "filename": "templates/CSA.md"
+  },
+  {
+    "name": "Design Partner Agreement",
+    "description": "Agreement for granting a design partner early access to a product in exchange for structured feedback, allowing the provider to develop and improve the product with the partner's participation in the design program.",
+    "filename": "templates/design-partner-agreement.md"
+  },
+  {
+    "name": "Service Level Agreement",
+    "description": "Standard terms defining uptime and response time commitments for cloud services, including how availability is calculated, service credit eligibility, and termination rights for repeated failures.",
+    "filename": "templates/sla.md"
+  },
+  {
+    "name": "Professional Services Agreement",
+    "description": "Standard terms for professional services engagements covering statements of work, deliverables, intellectual property assignment, subcontractors, payment, term and termination, warranties, liability caps, indemnification, insurance, and confidentiality.",
+    "filename": "templates/psa.md"
+  },
+  {
+    "name": "Data Processing Agreement",
+    "description": "Standard terms governing how a provider processes personal data on behalf of a customer, including GDPR compliance, processor and subprocessor relationships, restricted transfers (EEA SCCs and UK Addendum), security incident response, audit rights, and data deletion.",
+    "filename": "templates/DPA.md"
+  },
+  {
+    "name": "Partnership Agreement",
+    "description": "Standard terms for business partnership arrangements covering mutual obligations, trademark licensing, payment, escalation procedures, term and termination, representations, liability, indemnification, and confidentiality.",
+    "filename": "templates/Partnership-Agreement.md"
+  },
+  {
+    "name": "Software License Agreement",
+    "description": "Standard terms for licensing on-premise software, covering installation rights, user accounts, feedback, machine learning, open source, updates, restrictions, payment, term and termination, warranties, liability, indemnification, and confidentiality.",
+    "filename": "templates/Software-License-Agreement.md"
+  },
+  {
+    "name": "Pilot Agreement",
+    "description": "Short-term agreement allowing a prospective customer to evaluate a product or service before committing to a longer-term commercial deal, covering access rights, restrictions, disclaimer of warranties, limited liability, and confidentiality.",
+    "filename": "templates/Pilot-Agreement.md"
+  },
+  {
+    "name": "Business Associate Agreement",
+    "description": "Standard HIPAA-compliant terms governing the handling of protected health information (PHI) between a covered entity and a business associate, covering permitted uses, safeguards, subcontractors, breach notification, and data return.",
+    "filename": "templates/BAA.md"
+  },
+  {
+    "name": "AI Addendum",
+    "description": "Addendum to a base software agreement covering the use of AI and machine learning services, including input and output ownership, model training restrictions, non-training improvements, and disclaimers about the nature of AI-generated content.",
+    "filename": "templates/AI-Addendum.md"
+  }
+]
