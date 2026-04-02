@@ -38,3 +38,18 @@ class ChatResponse(BaseModel):
     """Structured output from the LLM and HTTP response to the frontend."""
     message: str
     fields: NDAFieldUpdate
+
+
+# ── Generic multi-document models ────────────────────────────────────────────
+# Field keys must match the keys defined in frontend/src/lib/docConfigs.ts
+
+class GenericChatRequest(BaseModel):
+    documentType: str
+    messages: list[ChatMessage]
+    currentFields: dict[str, Optional[str]]
+
+
+class GenericChatResponse(BaseModel):
+    """Structured output for any non-NDA document type."""
+    message: str
+    fields: dict[str, Optional[str]] = {}

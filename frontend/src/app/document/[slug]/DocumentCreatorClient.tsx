@@ -1,26 +1,32 @@
 "use client";
 
 import ChatPanel from "@/components/ChatPanel";
-import NDADocument from "@/components/NDADocument";
-import { useNDAChat } from "@/hooks/useNDAChat";
-import { NDAFormData } from "@/types/nda";
+import KeyTermsDocument from "@/components/KeyTermsDocument";
+import { useDocumentChat } from "@/hooks/useDocumentChat";
+import { getDocConfig } from "@/lib/docConfigs";
+import { ClientDocConfig } from "@/types/document";
 
-const defaultValues: NDAFormData = {
-  purpose: "",
-  effectiveDate: new Date().toISOString().split("T")[0],
-  mndaTerm: "expires",
-  mndaTermYears: "1",
-  confidentialityTerm: "fixed",
-  confidentialityTermYears: "1",
-  governingLaw: "",
-  jurisdiction: "",
-  modifications: "",
-  party1: { name: "", title: "", company: "", noticeAddress: "" },
-  party2: { name: "", title: "", company: "", noticeAddress: "" },
-};
+export default function DocumentCreatorClient({ slug }: { slug: string }) {
+  const config = getDocConfig(slug);
 
-export default function Home() {
-  const { messages, formData, isLoading, sendMessage, updateField } = useNDAChat(defaultValues);
+  if (!config) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center bg-[#032147] text-white gap-4">
+        <h1 className="font-heading text-2xl font-bold">Document not found</h1>
+        <p className="text-white/60 text-sm">There is no document with the slug &ldquo;{slug}&rdquo;.</p>
+        <a href="/documents" className="text-[#209dd7] hover:underline text-sm">
+          Browse all documents →
+        </a>
+      </div>
+    );
+  }
+
+  return <DocumentCreator config={config} />;
+}
+
+// Separate component so hooks only run after config is confirmed to exist
+function DocumentCreator({ config }: { config: ClientDocConfig }) {
+  const { messages, fields, isLoading, sendMessage, updateField } = useDocumentChat(config);
 
   return (
     <div className="h-full flex flex-col bg-[#0d1b2a] print:h-auto print:block print:bg-white overflow-hidden print:overflow-visible">
@@ -32,7 +38,7 @@ export default function Home() {
             Prelegal
           </span>
           <span className="w-px h-4 bg-white/20" />
-          <span className="text-white/45 text-[13px] font-sans">Mutual NDA Creator</span>
+          <span className="text-white/45 text-[13px] font-sans">{config.shortName}</span>
           <span className="w-px h-4 bg-white/20" />
           <a href="/documents" className="text-white/45 text-[13px] font-sans hover:text-white/70 transition-colors">
             All documents
@@ -81,11 +87,10 @@ export default function Home() {
         <main className="flex-1 bg-[#d4d8e2] overflow-y-auto custom-scroll print:block print:overflow-visible print:bg-white">
           <div className="min-h-full flex justify-center py-10 px-8 print:p-0 print:block">
             <div className="paper-card relative w-full max-w-[700px] bg-[#fffef9] shadow-[0_8px_48px_rgba(0,0,0,0.18),0_1px_3px_rgba(0,0,0,0.08)] rounded-[3px] px-14 py-14">
-              {/* DRAFT badge */}
               <div className="draft-badge absolute top-5 right-5 bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-bold tracking-[0.18em] uppercase px-2.5 py-1 rounded-sm">
                 Draft
               </div>
-              <NDADocument data={formData} onFieldChange={updateField} />
+              <KeyTermsDocument config={config} fields={fields} onFieldChange={updateField} />
             </div>
           </div>
         </main>
