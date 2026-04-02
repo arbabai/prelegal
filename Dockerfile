@@ -10,8 +10,9 @@ RUN npm run build
 
 
 # ── Stage 2: Run the FastAPI backend ────────────────────────────────
-# Use the official uv image (uv is pre-installed, no pip download needed)
-FROM ghcr.io/astral-sh/uv:python3.12-slim AS runner
+FROM python:3.12-slim AS runner
+# Copy uv binary from the official uv image (avoids pip network download)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 WORKDIR /app
 
 # Install Python dependencies (frozen ensures reproducible builds)
