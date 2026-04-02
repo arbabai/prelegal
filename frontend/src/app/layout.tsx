@@ -21,8 +21,8 @@ const garamond = EB_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Mutual NDA Creator | Prelegal",
-  description: "Generate a Mutual Non-Disclosure Agreement with your details filled in.",
+  title: "Prelegal — Legal agreements, drafted in minutes",
+  description: "Draft legal agreements from templates with Prelegal.",
 };
 
 export default function RootLayout({
