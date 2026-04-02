@@ -8,7 +8,9 @@ The available documents are covered in the catalog.json file in the project root
 
 @catalog.json
 
-Before we start: The initial implementation is front-end only prototype that only supports the Mutual NDA documents with no AI chat.
+~~Before we start: The initial implementation is front-end only prototype that only supports the Mutual NDA documents with no AI chat.~~
+
+The project now has a full-stack foundation (see Implementation Status below). The NDA creator remains the only supported document; AI chat is not yet implemented.
 
 ## Development process
 
@@ -54,3 +56,33 @@ Backend available at http://localhost:8000
 - Dark Navy: `#032147` (headings)
 - Gray Text: `#888888`
 
+
+## Implementation Status
+
+### Completed (PL-1 → PL-4)
+
+**Frontend** (`frontend/`)
+- Next.js 16 + React 19 + TypeScript + Tailwind CSS v4
+- Static export (`output: "export"`) — built to `frontend/out/`, served by FastAPI
+- `/` — Login screen (fake auth, navigates to `/nda` on submit)
+- `/nda` — Mutual NDA Creator: live side-by-side form + document preview, PDF via `window.print()`
+
+**Backend** (`backend/`)
+- FastAPI + uv project; runs at `http://localhost:8000`
+- SQLite DB at `backend/data/prelegal.db`, recreated fresh on each container start
+- `users` table: `id`, `email`, `password_hash`, `created_at`
+- Catch-all route serves the static frontend (path-traversal safe)
+- `GET /health` endpoint
+- 4 unit tests in `backend/tests/test_main.py`
+
+**Infrastructure**
+- Multi-stage `Dockerfile`: Node 20 builds frontend → Python 3.12 + uv serves backend
+- uv binary copied from `ghcr.io/astral-sh/uv:latest` (no pip install needed)
+- `docker-compose.yml`: `docker compose up --build` starts everything on port 8000
+- `scripts/start-{mac,linux}.sh`, `scripts/stop-{mac,linux}.sh`
+- `scripts/start-windows.ps1`, `scripts/stop-windows.ps1`
+
+### Not yet implemented
+- Real authentication (sign up / sign in against the DB)
+- AI chat for document drafting
+- Support for documents other than Mutual NDA
