@@ -21,6 +21,9 @@ RUN uv sync --directory backend --no-dev --frozen
 
 # Copy backend source
 COPY backend/main.py backend/
+COPY backend/models/ backend/models/
+COPY backend/services/ backend/services/
+COPY backend/routers/ backend/routers/
 
 # Copy built frontend
 COPY --from=frontend-builder /app/frontend/out frontend_build/

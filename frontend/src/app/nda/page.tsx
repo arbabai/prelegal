@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import NDAForm from "@/components/NDAForm";
+import ChatPanel from "@/components/ChatPanel";
 import NDADocument from "@/components/NDADocument";
+import { useNDAChat } from "@/hooks/useNDAChat";
 import { NDAFormData } from "@/types/nda";
 
 const defaultValues: NDAFormData = {
@@ -20,7 +20,7 @@ const defaultValues: NDAFormData = {
 };
 
 export default function Home() {
-  const [form, setForm] = useState<NDAFormData>(defaultValues);
+  const { messages, formData, isLoading, sendMessage, updateField } = useNDAChat(defaultValues);
 
   return (
     <div className="h-full flex flex-col bg-[#0d1b2a] print:h-auto print:block print:bg-white overflow-hidden print:overflow-visible">
@@ -37,7 +37,7 @@ export default function Home() {
 
         <button
           onClick={() => window.print()}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-[13px] font-medium px-4 py-2 rounded-lg transition-colors duration-150 cursor-pointer"
+          className="flex items-center gap-2 bg-[#753991] hover:bg-[#6a327f] active:bg-[#5c2a6d] text-white text-[13px] font-medium px-4 py-2 rounded-lg transition-colors duration-150 cursor-pointer"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -61,15 +61,15 @@ export default function Home() {
       {/* ── Split content ─────────────────────────────── */}
       <div className="flex flex-1 min-h-0 overflow-hidden print:block print:overflow-visible print:h-auto">
 
-        {/* Left: Form panel */}
-        <aside className="no-print w-[42%] shrink-0 bg-[#f4f5f8] border-r border-[#e0e4ec] overflow-y-auto custom-scroll">
-          <div className="px-1 pb-10">
-            <div className="px-6 pt-6 pb-2">
-              <p className="text-[10px] font-bold text-[#a0a8bb] uppercase tracking-[0.15em]">
-                Document Details
-              </p>
-            </div>
-            <NDAForm value={form} onChange={setForm} />
+        {/* Left: AI Chat panel */}
+        <aside className="no-print w-[42%] shrink-0 bg-[#f4f5f8] border-r border-[#e0e4ec] flex flex-col overflow-hidden">
+          <div className="px-6 pt-4 pb-3 shrink-0 border-b border-[#e0e4ec]">
+            <p className="text-[10px] font-bold text-[#a0a8bb] uppercase tracking-[0.15em]">
+              AI Assistant
+            </p>
+          </div>
+          <div className="flex-1 min-h-0">
+            <ChatPanel messages={messages} isLoading={isLoading} onSend={sendMessage} />
           </div>
         </aside>
 
@@ -81,7 +81,7 @@ export default function Home() {
               <div className="draft-badge absolute top-5 right-5 bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-bold tracking-[0.18em] uppercase px-2.5 py-1 rounded-sm">
                 Draft
               </div>
-              <NDADocument data={form} />
+              <NDADocument data={formData} onFieldChange={updateField} />
             </div>
           </div>
         </main>

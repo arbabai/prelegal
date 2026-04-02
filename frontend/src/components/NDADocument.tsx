@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { NDAFormData } from "@/types/nda";
 
 interface NDADocumentProps {
   data: NDAFormData;
+  onFieldChange?: (field: string, value: string) => void;
 }
 
 function formatDate(iso: string): string {
@@ -13,19 +15,126 @@ function formatDate(iso: string): string {
   return date.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 }
 
-/** Renders user value or a light-gray placeholder */
+/** Renders user value or a light-gray placeholder (read-only, used inside legal text) */
 function Val({ v, p }: { v: string; p: string }) {
   if (v && v.trim()) {
     return (
-      <span className="text-indigo-900 underline decoration-indigo-200 underline-offset-2">
-        {v}
-      </span>
+      <span className="text-indigo-900 underline decoration-indigo-200 underline-offset-2">{v}</span>
     );
   }
   return <span className="italic text-gray-300">[{p}]</span>;
 }
 
-export default function NDADocument({ data }: NDADocumentProps) {
+/** Inline-editable text field for the cover page and signature table */
+function InlineEdit({
+  value,
+  placeholder,
+  onChange,
+  multiline = false,
+}: {
+  value: string;
+  placeholder: string;
+  onChange: (v: string) => void;
+  multiline?: boolean;
+}) {
+  const safeValue = value ?? "";
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(safeValue);
+
+  // Keep draft in sync when the AI updates the value externally
+  useEffect(() => {
+    if (!editing) setDraft(safeValue);
+  }, [safeValue, editing]);
+
+  function startEditing() {
+    setDraft(safeValue);
+    setEditing(true);
+  }
+
+  function commit() {
+    onChange(draft);
+    setEditing(false);
+  }
+
+  const inputCls =
+    "w-full bg-white border border-[#209dd7] rounded px-2 py-1 text-[13px] " +
+    "focus:outline-none focus:ring-2 focus:ring-[#209dd7]/30";
+
+  if (!editing) {
+    return (
+      <span
+        onClick={startEditing}
+        title="Click to edit"
+        className="cursor-text hover:bg-[#ecad0a]/10 rounded px-0.5 -mx-0.5 transition-colors"
+      >
+        {safeValue.trim() ? safeValue : <span className="italic text-gray-300">[{placeholder}]</span>}
+      </span>
+    );
+  }
+
+  if (multiline) {
+    return (
+      <textarea
+        autoFocus
+        rows={3}
+        className={inputCls + " resize-none block"}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+      />
+    );
+  }
+
+  return (
+    <input
+      autoFocus
+      type="text"
+      className={inputCls + " block"}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") commit();
+        if (e.key === "Escape") {
+          setDraft(value);
+          setEditing(false);
+        }
+      }}
+    />
+  );
+}
+
+/** Inline-editable date field — displays formatted date, edits as ISO string */
+function InlineDateEdit({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [editing, setEditing] = useState(false);
+
+  if (!editing) {
+    return (
+      <span
+        onClick={() => setEditing(true)}
+        title="Click to edit"
+        className="cursor-text hover:bg-[#ecad0a]/10 rounded px-0.5 -mx-0.5 transition-colors"
+      >
+        {value ? formatDate(value) : <span className="italic text-gray-300">[Date]</span>}
+      </span>
+    );
+  }
+
+  return (
+    <input
+      autoFocus
+      type="date"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onBlur={() => setEditing(false)}
+      className="bg-white border border-[#209dd7] rounded px-2 py-1 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#209dd7]/30"
+    />
+  );
+}
+
+export default function NDADocument({ data, onFieldChange }: NDADocumentProps) {
+  const edit = onFieldChange ?? (() => {});
+
   const mndaTermLabel =
     data.mndaTerm === "expires"
       ? `Expires ${data.mndaTermYears} year${Number(data.mndaTermYears) !== 1 ? "s" : ""} from Effective Date.`
@@ -46,9 +155,7 @@ export default function NDADocument({ data }: NDADocumentProps) {
       ? `${data.confidentialityTermYears} year${Number(data.confidentialityTermYears) !== 1 ? "s" : ""} from the Effective Date, but in the case of trade secrets until Confidential Information is no longer considered a trade secret under applicable laws`
       : "in perpetuity";
 
-  const effectiveDateDisplay = data.effectiveDate
-    ? formatDate(data.effectiveDate)
-    : null;
+  const effectiveDateDisplay = data.effectiveDate ? formatDate(data.effectiveDate) : null;
 
   return (
     <div className="font-serif text-[#1c1814] leading-relaxed">
@@ -88,11 +195,16 @@ export default function NDADocument({ data }: NDADocumentProps) {
       {/* ── Cover page fields ───────────────────────── */}
       <div className="border border-[#e8e2d0] rounded overflow-hidden mb-7">
         <CoverField label="Purpose" sublabel="How Confidential Information may be used">
-          {data.purpose ? data.purpose : <span className="italic text-gray-300">[Purpose]</span>}
+          <InlineEdit
+            value={data.purpose}
+            placeholder="Purpose"
+            onChange={(v) => edit("purpose", v)}
+            multiline
+          />
         </CoverField>
 
         <CoverField label="Effective Date">
-          {effectiveDateDisplay ?? <span className="italic text-gray-300">[Date]</span>}
+          <InlineDateEdit value={data.effectiveDate} onChange={(v) => edit("effectiveDate", v)} />
         </CoverField>
 
         <CoverField label="MNDA Term" sublabel="The length of this MNDA">
@@ -106,17 +218,30 @@ export default function NDADocument({ data }: NDADocumentProps) {
         <CoverField label="Governing Law & Jurisdiction">
           <p>
             <span className="font-medium text-[#3a3020]">Governing Law: </span>
-            {data.governingLaw ? data.governingLaw : <span className="italic text-gray-300">[State]</span>}
+            <InlineEdit
+              value={data.governingLaw}
+              placeholder="State"
+              onChange={(v) => edit("governingLaw", v)}
+            />
           </p>
           <p className="mt-0.5">
             <span className="font-medium text-[#3a3020]">Jurisdiction: </span>
-            {data.jurisdiction ? data.jurisdiction : <span className="italic text-gray-300">[City, State]</span>}
+            <InlineEdit
+              value={data.jurisdiction}
+              placeholder="City, State"
+              onChange={(v) => edit("jurisdiction", v)}
+            />
           </p>
         </CoverField>
 
-        {data.modifications && (
-          <CoverField label="MNDA Modifications">{data.modifications}</CoverField>
-        )}
+        <CoverField label="MNDA Modifications">
+          <InlineEdit
+            value={data.modifications}
+            placeholder="None"
+            onChange={(v) => edit("modifications", v)}
+            multiline
+          />
+        </CoverField>
       </div>
 
       <p className="text-[13px] font-sans mb-6 text-[#4a4030]">
@@ -138,7 +263,6 @@ export default function NDADocument({ data }: NDADocumentProps) {
             </tr>
           </thead>
           <tbody>
-            {/* Signature row */}
             <tr>
               <td className="border border-[#e8e2d0] px-3 py-2 text-[11px] font-sans font-semibold text-[#6a5e48]">
                 Signature
@@ -159,10 +283,18 @@ export default function NDADocument({ data }: NDADocumentProps) {
                   {label}
                 </td>
                 <td className="border border-[#e8e2d0] px-3 py-2 text-[13px]">
-                  {data.party1[key] || <span className="text-gray-300 font-sans italic text-xs">—</span>}
+                  <InlineEdit
+                    value={data.party1[key]}
+                    placeholder={label}
+                    onChange={(v) => edit(`party1.${key}`, v)}
+                  />
                 </td>
                 <td className="border border-[#e8e2d0] px-3 py-2 text-[13px]">
-                  {data.party2[key] || <span className="text-gray-300 font-sans italic text-xs">—</span>}
+                  <InlineEdit
+                    value={data.party2[key]}
+                    placeholder={label}
+                    onChange={(v) => edit(`party2.${key}`, v)}
+                  />
                 </td>
               </tr>
             ))}
