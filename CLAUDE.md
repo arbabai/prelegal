@@ -10,7 +10,7 @@ The available documents are covered in the catalog.json file in the project root
 
 ~~Before we start: The initial implementation is front-end only prototype that only supports the Mutual NDA documents with no AI chat.~~
 
-The project now has a full-stack foundation (see Implementation Status below). The NDA creator remains the only supported document; AI chat is not yet implemented.
+The project now has a full-stack foundation with AI chat (see Implementation Status below). The NDA creator remains the only supported document.
 
 ## Development process
 
@@ -59,21 +59,30 @@ Backend available at http://localhost:8000
 
 ## Implementation Status
 
-### Completed (PL-1 → PL-4)
+### Completed (PL-1 → PL-5)
 
 **Frontend** (`frontend/`)
 - Next.js 16 + React 19 + TypeScript + Tailwind CSS v4
 - Static export (`output: "export"`) — built to `frontend/out/`, served by FastAPI
 - `/` — Login screen (fake auth, navigates to `/nda` on submit)
-- `/nda` — Mutual NDA Creator: live side-by-side form + document preview, PDF via `window.print()`
+- `/nda` — Mutual NDA Creator: AI chat panel (left) + live document preview (right), PDF via `window.print()`
+  - AI sends an opening message on load and asks conversational questions to populate fields
+  - All NDA cover page and signature fields are inline-editable directly in the document
+  - `useNDAChat` hook manages messages + form state; stale-closure-safe via `useRef` pattern
+  - `deepMerge` with null filtering for partial AI field patches
 
 **Backend** (`backend/`)
 - FastAPI + uv project; runs at `http://localhost:8000`
 - SQLite DB at `backend/data/prelegal.db`, recreated fresh on each container start
 - `users` table: `id`, `email`, `password_hash`, `created_at`
+- `POST /api/chat` — AI chat endpoint; returns `{ message, fields }` JSON
+  - `backend/models/chat.py` — Pydantic models (`ChatRequest`, `ChatResponse`, `NDAFieldUpdate`)
+  - `backend/services/nda_ai.py` — LiteLLM call with structured outputs + graceful fallback
+  - `backend/routers/chat.py` — FastAPI router
 - Catch-all route serves the static frontend (path-traversal safe)
 - `GET /health` endpoint
-- 4 unit tests in `backend/tests/test_main.py`
+- Tests in `backend/tests/` (`test_main.py` + `test_chat.py`)
+- Dependencies: `litellm`, `python-dotenv` (in addition to `fastapi`, `uvicorn`)
 
 **Infrastructure**
 - Multi-stage `Dockerfile`: Node 20 builds frontend → Python 3.12 + uv serves backend
@@ -81,8 +90,8 @@ Backend available at http://localhost:8000
 - `docker-compose.yml`: `docker compose up --build` starts everything on port 8000
 - `scripts/start-{mac,linux}.sh`, `scripts/stop-{mac,linux}.sh`
 - `scripts/start-windows.ps1`, `scripts/stop-windows.ps1`
+- `.env` at project root must contain `OPENROUTER_API_KEY` for AI chat to work
 
 ### Not yet implemented
 - Real authentication (sign up / sign in against the DB)
-- AI chat for document drafting
 - Support for documents other than Mutual NDA
