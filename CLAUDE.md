@@ -8,9 +8,7 @@ The available documents are covered in the catalog.json file in the project root
 
 @catalog.json
 
-~~Before we start: The initial implementation is front-end only prototype that only supports the Mutual NDA documents with no AI chat.~~
-
-The project now has a full-stack foundation with AI chat (see Implementation Status below). The NDA creator remains the only supported document.
+The project has a full-stack foundation with AI chat supporting all document types in the catalog (see Implementation Status below).
 
 ## Development process
 
@@ -59,29 +57,41 @@ Backend available at http://localhost:8000
 
 ## Implementation Status
 
-### Completed (PL-1 → PL-5)
+### Completed (PL-1 → PL-6)
 
 **Frontend** (`frontend/`)
 - Next.js 16 + React 19 + TypeScript + Tailwind CSS v4
 - Static export (`output: "export"`) — built to `frontend/out/`, served by FastAPI
 - `/` — Login screen (fake auth, navigates to `/nda` on submit)
+- `/documents` — Document selection grid: all 12 catalog document types as cards
 - `/nda` — Mutual NDA Creator: AI chat panel (left) + live document preview (right), PDF via `window.print()`
   - AI sends an opening message on load and asks conversational questions to populate fields
   - All NDA cover page and signature fields are inline-editable directly in the document
   - `useNDAChat` hook manages messages + form state; stale-closure-safe via `useRef` pattern
   - `deepMerge` with null filtering for partial AI field patches
+- `/document/[slug]` — Generic document creator for all 11 non-NDA document types
+  - Same two-panel layout as `/nda`; all 11 slugs pre-rendered at build time via `generateStaticParams`
+  - `useDocumentChat` hook — generic version of `useNDAChat`, posts to `/api/chat/generic`
+  - `KeyTermsDocument` component — renders an inline-editable key terms table + standard terms notice
+  - `InlineEdit` / `InlineDateEdit` — shared components (extracted from NDADocument, used by both renderers)
+  - `frontend/src/lib/docConfigs.ts` — frontend registry: field definitions + labels for all 11 doc types
+  - `frontend/src/types/document.ts` — `FieldDef` (with `inputType` discriminator), `ClientDocConfig`, `DocFields`
 
 **Backend** (`backend/`)
 - FastAPI + uv project; runs at `http://localhost:8000`
 - SQLite DB at `backend/data/prelegal.db`, recreated fresh on each container start
 - `users` table: `id`, `email`, `password_hash`, `created_at`
-- `POST /api/chat` — AI chat endpoint; returns `{ message, fields }` JSON
+- `POST /api/chat` — NDA-specific AI chat; returns `{ message, fields: NDAFieldUpdate }`
   - `backend/models/chat.py` — Pydantic models (`ChatRequest`, `ChatResponse`, `NDAFieldUpdate`)
   - `backend/services/nda_ai.py` — LiteLLM call with structured outputs + graceful fallback
-  - `backend/routers/chat.py` — FastAPI router
+- `POST /api/chat/generic` — Generic AI chat for all other document types
+  - `backend/models/chat.py` — `GenericChatRequest`, `GenericChatResponse` (fields as `dict[str, Optional[str]]`)
+  - `backend/services/doc_registry.py` — `DocConfig` + `FieldDef` for all 11 document types; unknown slug returns helpful fallback listing available documents
+  - `backend/services/generic_ai.py` — LiteLLM call parameterised by doc type; filters returned keys to known fields only
+- `backend/routers/chat.py` — FastAPI router for both chat endpoints
 - Catch-all route serves the static frontend (path-traversal safe)
 - `GET /health` endpoint
-- Tests in `backend/tests/` (`test_main.py` + `test_chat.py`)
+- Tests in `backend/tests/` (`test_main.py`, `test_chat.py`, `test_generic_chat.py`) — 13 tests total
 - Dependencies: `litellm`, `python-dotenv` (in addition to `fastapi`, `uvicorn`)
 
 **Infrastructure**
@@ -94,4 +104,3 @@ Backend available at http://localhost:8000
 
 ### Not yet implemented
 - Real authentication (sign up / sign in against the DB)
-- Support for documents other than Mutual NDA
